@@ -1,0 +1,63 @@
+{
+  "summary": {
+    "generated_at": "2026-07-25T13:23:38.216658+00:00",
+    "total_candidates": 5,
+    "shortlisted_candidates": 2,
+    "maybe_candidates": 1,
+    "rejected_candidates": 2,
+    "manual_review_required": 1,
+    "average_match_score": 53.0
+  },
+  "candidates": [
+    {
+      "candidate_id": "C001",
+      "name": "Sara Ahmed",
+      "verdict": "Shortlist",
+      "match_score": 95,
+      "reason": "Candidate meets all Must Have requirements and has relevant additional skills, making her a strong fit for the Python Backend Developer position.",
+      "reasoning": "The candidate, Sara Ahmed, has 3 years of Python experience, which meets the minimum requirement of 2 years. She also has experience with REST APIs and has worked on at least one AI or ML project, satisfying all Must Have requirements. Additionally, she has experience with FastAPI, which is a Good to Have requirement, and knows AWS, another Good to Have requirement.",
+      "rule_override_applied": false,
+      "manual_review_required": false
+    },
+    {
+      "candidate_id": "C002",
+      "name": "Ali Raza",
+      "verdict": "Reject",
+      "match_score": 20,
+      "reason": "Candidate does not meet the minimum Python experience requirement and lacks AI/ML project experience.",
+      "reasoning": "The candidate has 1 year of Python experience, which does not meet the minimum requirement of 2 years. The candidate has REST API experience, but lacks experience in AI or ML projects. The candidate has experience with Django, which is a good-to-have skill. However, the candidate's total experience is 1.5 years, which is above the disqualification threshold of 1 year. The candidate's cloud or DevOps experience is not provided.",
+      "rule_override_applied": false,
+      "manual_review_required": false
+    },
+    {
+      "candidate_id": "C003",
+      "name": "Maria Khan",
+      "verdict": "Reject",
+      "match_score": 0,
+      "reason": "Candidate lacks essential Python, REST API, and AI/ML experience.",
+      "reasoning": "Candidate does not meet the minimum Python experience requirement, lacks REST API experience, and has not worked on any AI or ML projects. However, the candidate has more than 1 year of total experience.",
+      "rule_override_applied": false,
+      "manual_review_required": false
+    },
+    {
+      "candidate_id": "C004",
+      "name": "Usman Tariq",
+      "verdict": "Maybe",
+      "match_score": 60,
+      "reason": "Candidate meets some requirements but lacks REST API experience",
+      "reasoning": "The candidate has 2 years of Python experience, which meets the minimum requirement. The candidate also has experience working on at least one AI or ML project. However, the candidate lacks REST API experience, which is a Must Have requirement. The candidate has experience with FastAPI, which is a Good to Have requirement, and knows Docker, which is also a Good to Have requirement.",
+      "rule_override_applied": false,
+      "manual_review_required": true
+    },
+    {
+      "candidate_id": "C005",
+      "name": "Hina Malik",
+      "verdict": "Shortlist",
+      "match_score": 90,
+      "reason": "Candidate meets all Must Have requirements and has additional relevant skills, including GCP experience.",
+      "reasoning": "The candidate has 4 years of Python experience, which meets the minimum requirement of 2 years. The candidate also has REST API experience and has worked on at least one AI or ML project, satisfying all Must Have requirements. Additionally, the candidate has experience with GCP, which is a Good to Have requirement. However, the candidate's experience with FastAPI or Django is not provided.",
+      "rule_override_applied": false,
+      "manual_review_required": false
+    }
+  ]
+}
