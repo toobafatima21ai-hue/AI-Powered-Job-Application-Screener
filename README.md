@@ -1,238 +1,452 @@
 # AI-Powered Job Application Screener
 
-An agentic Python pipeline that reads job requirements and candidate profiles, evaluates each
-candidate against the role using an LLM (Google Gemini), and produces a structured JSON report
-with a `Shortlist` / `Reject` / `Maybe` verdict, a 0–100 match score, and a human-readable reason
-per candidate.
+An agentic Python-based recruitment screening pipeline that evaluates candidates against job requirements using an LLM-powered reasoning system combined with deterministic business rules.
 
-## Overview
+The system reads job requirements and candidate profiles, evaluates candidate-job fit using Groq LLM models, applies rule-based validation, identifies candidates requiring human review, and generates a structured JSON hiring report.
 
-Hiring teams need to triage large volumes of applications quickly and consistently. This project
-builds a small but production-inspired agent that:
+---
 
-1. Reads job requirements from a plain-text (or JSON) file.
-2. Reads candidate profiles from a CSV file.
-3. Evaluates each candidate against the requirements using an LLM, forcing step-by-step reasoning
-   before a verdict.
-4. Applies a deterministic business-rule check for the two explicit disqualification rules stated
-   in the job requirements (no Python experience at all / less than 1 year total experience) —
-   regardless of what the LLM decided.
-5. Writes a final JSON report to disk.
+# Overview
 
-### Design philosophy: hybrid LLM + rules
+Hiring teams often receive many applications and need a consistent way to identify strong candidates.
 
-The LLM is responsible for everything genuinely subjective: reasoning through each requirement,
-scoring fit, deciding between `Shortlist` / `Reject` / `Maybe`, and writing the explanation. But
-two disqualification rules are stated in the assignment as unambiguous, binary facts — "less than
-1 year of total experience" and "no Python experience at all." Binary rules like these don't need
-a language model's judgment; they need to be enforced the same way, every time. So they are
-checked in plain Python (`core/validators.py`) *after* the LLM responds, and only override the
-verdict when a rule is actually violated. A subjective `Maybe` from the LLM is never touched
-unless a hard rule was broken — the validator does not second-guess reasoning, only enforces the
-two explicit constraints.
+This project builds a production-inspired AI screening agent that:
 
-## Architecture
+1. Reads job requirements from a text file.
+2. Reads candidate profiles from CSV files.
+3. Uses an LLM to analyze candidate suitability.
+4. Evaluates every requirement individually.
+5. Generates:
+   - Shortlist
+   - Reject
+   - Maybe
 
-\```
-job_reader.py ─┐
-               ├─→ prompt_builder.py → llm_client.py → evaluator.py (parse, validate, retry loop)
-candidate_reader.py ─┘                                          │
-                                                                  ▼
-                                                          validators.py (hard rule check)
-                                                                  │
-                                                                  ▼
-                                                          report_writer.py → report.json
-\```
+   decisions with explanations.
+6. Applies deterministic business rules for critical disqualification conditions.
+7. Flags uncertain candidates for manual review.
+8. Produces a structured JSON report containing evaluation results and summary statistics.
 
-`agent.py` is the only file that ties these together — it's intentionally thin so the whole
-pipeline can be understood by reading one file top to bottom.
+---
 
-## Project Structure
+# Key Features
 
-\```
+## Hybrid AI + Rule-Based Architecture
+
+The system combines:
+
+### LLM Responsibilities
+
+The LLM handles subjective tasks:
+
+- Requirement comparison
+- Candidate reasoning
+- Match scoring
+- Shortlist / Reject / Maybe decision
+- Human-readable explanation
+
+
+### Deterministic Validator Responsibilities
+
+Python rules handle objective decisions:
+
+- Less than 1 year total experience
+- No Python experience
+- Manual review detection
+
+This prevents important business rules from depending only on probabilistic LLM output.
+
+---
+
+# Architecture
+
+```
+                    Job Requirements
+                           |
+                           |
+                    Candidate Profiles
+                           |
+                           v
+
+                 prompt_builder.py
+                 (Structured Prompt)
+
+                           |
+                           v
+
+                  llm_client.py
+                  (Groq API)
+
+                           |
+                           v
+
+                  evaluator.py
+       (Parse → Validate → Retry → Process)
+
+                           |
+                           v
+
+                 validators.py
+        (Hard Rules + Manual Review)
+
+                           |
+                           v
+
+              report_writer.py
+
+                           |
+                           v
+
+                 report.json
+```
+
+`agent.py` acts as the main pipeline controller connecting all components.
+
+---
+
+# Project Structure
+
+```
 job-screening-agent/
-├── agent.py                  # CLI entrypoint — orchestrates the pipeline
-├── config.py                 # Loads .env, holds all tunable constants
+
+├── agent.py
+├── config.py
+
 ├── core/
-│   ├── job_reader.py          # Reads requirements.txt/json → raw text
-│   ├── candidate_reader.py    # Reads CSV → list[CandidateProfile], skips malformed rows
-│   ├── prompt_builder.py      # Builds the structured evaluation prompt
-│   ├── llm_client.py          # Thin wrapper around the Gemini API
-│   ├── evaluator.py           # Orchestrates: prompt → LLM → validate → retry → business rules
-│   ├── validators.py          # Deterministic disqualification rule enforcement
-│   └── report_writer.py       # Writes the final JSON report
+│   ├── job_reader.py
+│   ├── candidate_reader.py
+│   ├── prompt_builder.py
+│   ├── llm_client.py
+│   ├── evaluator.py
+│   ├── validators.py
+│   └── report_writer.py
+
 ├── models/
-│   └── schemas.py             # Pydantic models: CandidateProfile, LLMEvaluationOutput, EvaluationResult
+│   └── schemas.py
+
 ├── data/
-│   ├── job_requirements.txt   # Sample job requirements
-│   └── candidates.csv         # Sample candidates (5 rows)
+│   ├── job_requirements.txt
+│   ├── candidates.csv
+│   └── test_edge_candidates.csv
+
 ├── output/
-│   └── report.json            # Sample output (committed for reviewers to inspect)
-├── logs/                      # Runtime logs (created automatically, .log files gitignored)
+│   └── report.json
+
+├── logs/
+
 ├── tests/
-│   └── test_validators.py     # Offline unit tests for the business-rule validator
+
 ├── .env.example
-├── .gitignore
 ├── requirements.txt
 └── README.md
-\```
+```
 
-## Installation
+---
 
-\```bash
+# Installation
+
+Clone the repository:
+
+```bash
 git clone <your-repo-url>
+
 cd job-screening-agent
+```
+
+Create virtual environment:
+
+```bash
 python -m venv venv
-source venv/bin/activate    # on Windows: venv\Scripts\activate
+```
+
+Activate environment:
+
+Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Linux/Mac:
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
-\```
+```
 
-## Dependencies
+---
 
-- `google-genai` — official Google SDK for the Gemini API (current SDK; the older
-  `google-generativeai` package is deprecated and was deliberately not used here).
-- `pydantic` — schema definition and validation for both candidate input data and LLM output.
-- `python-dotenv` — loads `GEMINI_API_KEY` and other settings from `.env`.
+# API Key Setup
 
-## API Key Setup
+This project uses Groq API for LLM inference.
 
-1. Get a free Gemini API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
-2. Copy the example env file:
-   \```bash
-   cp .env.example .env
-   \```
-3. Open `.env` and set:
-   \```
-   GEMINI_API_KEY=your_actual_key_here
-   \```
+Create a free Groq API key from:
 
-The key is never hardcoded anywhere in the codebase, and `.env` is gitignored.
+```
+https://console.groq.com/
+```
 
-## Run Instructions
+Create environment file:
 
-\```bash
-python agent.py --job data/job_requirements.txt --candidates data/candidates.csv
-\```
+```bash
+copy .env.example .env
+```
 
-## CLI Examples
+or manually create:
 
-\```bash
-# Basic run using the sample data
-python agent.py --job data/job_requirements.txt --candidates data/candidates.csv
+```
+.env
+```
 
-# Custom output path
-python agent.py --job data/job_requirements.txt --candidates data/candidates.csv --output output/custom_report.json
+Add:
 
-# Verbose logging (useful for debugging retries)
-python agent.py --job data/job_requirements.txt --candidates data/candidates.csv --log-level DEBUG
+```env
+GROQ_API_KEY=your_api_key_here
+```
 
-# JSON-format job requirements are also supported
-python agent.py --job data/job_requirements.json --candidates data/candidates.csv
-\```
+The API key is never hardcoded inside the project.
 
-Console output after a run:
+---
 
-\```
-==================================================
-SCREENING COMPLETE
-==================================================
-Total candidates evaluated : 5
-  Shortlist  : 2
-  Maybe      : 2
-  Reject     : 1
-Report written to          : output/report.json
-==================================================
-\```
+# Configuration
 
-## Example Output
+All configurable values are stored inside:
 
-See [`output/report.json`](output/report.json) for a full sample. Excerpt:
+```
+config.py
+```
 
-\```json
-{
-  "candidate_id": "C001",
-  "name": "Sara Ahmed",
-  "verdict": "Shortlist",
-  "match_score": 95,
-  "reason": "3 years Python, REST API confirmed, AI/ML project completed, and strong good-to-have coverage with FastAPI and AWS.",
-  "reasoning": "Must Have check: python_years=3 satisfies the 2-year minimum. ...",
-  "rule_override_applied": false
-}
-\```
+and loaded from `.env`.
 
-`rule_override_applied` is `true` whenever the deterministic disqualification check overrode the
-LLM's verdict — this makes every override auditable rather than silent.
+Example:
 
-## Screenshots
-
-_Add a terminal screenshot of a run, and/or a screenshot of `output/report.json` opened in your
-editor, here before submitting._
-
-`[ Screenshot placeholder — terminal run output ]`
-
-`[ Screenshot placeholder — sample report.json ]`
-
-## Error Handling & Edge Cases
-
-| Scenario | Behavior |
+| Variable | Purpose |
 |---|---|
-| Job requirements file missing/empty | Fails fast with a clear error before any LLM calls are made |
-| Candidates CSV missing/unreadable | Fails fast with a clear error |
-| A single CSV row is malformed (missing ID/name) | That row is skipped and logged; the rest of the batch proceeds |
-| Numeric field is blank/non-numeric ("NaN", "n/a", text) | Coerced to `0.0` rather than crashing |
-| LLM returns malformed JSON | Retried (up to `MAX_RETRIES`) with the validation error fed back into the prompt |
-| LLM output fails Pydantic schema validation | Same retry loop as above |
-| All retries exhausted | Candidate gets a safe fallback result: `verdict="Maybe"`, flagged for manual review — never a crash |
-| Invalid/missing API key | Fails fast for that candidate (not retried, since retrying won't help) with a clear log message |
-| API timeout | Retried, subject to the same retry budget |
-| Candidate has 0 Python years or < 1 year total experience | Deterministically forced to `Reject`, regardless of the LLM's verdict |
+| GROQ_API_KEY | Groq authentication key |
+| MODEL_NAME | LLM model name |
+| TEMPERATURE | Controls randomness |
+| LLM_TIMEOUT_SECONDS | API timeout |
+| MAX_RETRIES | Invalid response retry count |
+| MIN_TOTAL_EXPERIENCE_YEARS | Hard rejection threshold |
+| MIN_PYTHON_YEARS_FOR_DISQUALIFY | Python experience rule |
 
-## Configuration
+Example:
 
-All tunables live in `.env` / `config.py` — nothing is hardcoded in the pipeline:
+```env
+MODEL_NAME=llama-3.3-70b-versatile
+TEMPERATURE=0
+MAX_RETRIES=2
+```
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `GEMINI_API_KEY` | *(required)* | Your Gemini API key |
-| `MODEL_NAME` | `gemini-2.0-flash` | Gemini model used for evaluation |
-| `TEMPERATURE` | `0.1` | Lower = more deterministic, consistent verdicts |
-| `LLM_TIMEOUT_SECONDS` | `30` | Per-call timeout |
-| `MAX_RETRIES` | `2` | Retry attempts after an invalid/failed response |
-| `MIN_TOTAL_EXPERIENCE_YEARS` | `1` | Disqualification threshold |
-| `MIN_PYTHON_YEARS_FOR_DISQUALIFY` | `0` | Below/equal this = "no Python experience at all" |
+---
 
-## Running Tests
+# Running the Application
 
-\```bash
-python -m pytest tests/ -v
-\```
+## Normal Candidate Evaluation
 
-The test suite covers the business-rule validator offline (no API calls needed) — including the
-key "hybrid" behavior that a subjective `Maybe` verdict is never touched unless a hard rule is
-violated.
+Run:
 
-## Future Improvements
+```bash
+python agent.py \
+--job data/job_requirements.txt \
+--candidates data/candidates.csv
+```
 
-- **Batch/async evaluation** — evaluate candidates concurrently with `asyncio` instead of
-  sequentially, for larger candidate pools.
-- **Fallback model chain** — if Gemini is unavailable, fall back to a secondary provider (mirrors
-  a pattern I've used in a previous project) rather than failing the whole run.
-- **Confidence-aware retries** — currently every invalid response gets the same retry treatment;
-  a smarter version could distinguish "malformed JSON" (worth retrying) from "safety-filtered"
-  (not worth retrying).
-- **Structured requirements parsing as an optional mode** — for job postings with a very
-  consistent format, an optional structured parser could reduce LLM calls, while still falling
-  back to the current free-text approach for anything irregular.
-- **Web UI** — a lightweight Streamlit front end for uploading a CSV and viewing verdicts, similar
-  to my other portfolio projects.
+The generated report will be saved:
 
-## My Approach (for the submission email)
+```
+output/report.json
+```
 
-I designed this as a hybrid LLM + deterministic-rules pipeline: the LLM performs all subjective
-reasoning, scoring, and the Shortlist/Reject/Maybe judgment call with an explicit chain-of-thought
-requirement, while the two explicit disqualification rules from the job requirements are enforced
-in code after the LLM responds — auditable via a `rule_override_applied` flag — so a binary
-business rule is never left to probabilistic judgment. Every input boundary (CSV parsing, LLM
-JSON output) is validated with Pydantic, with a retry loop that feeds validation errors back to
-the model, and a safe non-crashing fallback if retries are exhausted. With more time, I'd add
-concurrent evaluation and a fallback model chain for provider resilience.
+---
+
+# Edge Case Testing
+
+The project includes:
+
+```
+data/test_edge_candidates.csv
+```
+
+This dataset tests:
+
+- Missing information
+- Borderline experience
+- Weak candidates
+- Ambiguous skills
+- Human review scenarios
+
+
+Run:
+
+```bash
+python agent.py \
+--job data/job_requirements.txt \
+--candidates data/test_edge_candidates.csv
+```
+
+---
+
+# Output Report
+
+The generated JSON report contains:
+
+## Summary
+
+Example:
+
+```json
+{
+ "total_candidates":5,
+ "shortlisted_candidates":2,
+ "maybe_candidates":1,
+ "rejected_candidates":2,
+ "manual_review_required":2,
+ "average_match_score":65
+}
+```
+
+## Candidate Evaluation
+
+Example:
+
+```json
+{
+ "candidate_id":"C001",
+ "name":"Sara Ahmed",
+ "verdict":"Shortlist",
+ "match_score":95,
+ "reason":"Strong Python backend developer with AI/ML experience.",
+ "reasoning":"Candidate satisfies all Must Have requirements.",
+ "manual_review_required":false
+}
+```
+
+---
+
+# LLM Evaluation Strategy
+
+The prompt forces the model to:
+
+1. Analyze every Must Have requirement.
+2. Analyze Good To Have skills.
+3. Identify missing information.
+4. Explain strengths and weaknesses.
+5. Select an appropriate verdict.
+
+The model is instructed:
+
+- Never invent experience.
+- Never assume missing skills.
+- Prefer Maybe when uncertainty exists.
+
+---
+
+# Verdict Logic
+
+## Shortlist
+
+Used when:
+
+- All Must Have requirements are satisfied.
+- Candidate has relevant additional skills.
+- No critical ambiguity exists.
+
+
+## Reject
+
+Used when:
+
+- Candidate fails important requirements.
+- Candidate violates hard disqualification rules.
+
+
+## Maybe
+
+Used when:
+
+- Candidate is borderline.
+- Important information is missing.
+- Human review is recommended.
+
+---
+
+# Edge Case Handling
+
+| Scenario | System Behavior |
+|---|---|
+| Missing candidate fields | Marked as unclear/not provided |
+| Weak candidate profile | Evaluated normally and rejected if unsuitable |
+| Borderline experience | May trigger Maybe/manual review |
+| Invalid LLM JSON | Automatic retry with validation feedback |
+| API failure | Safe fallback response |
+| Hard rule violation | Deterministic Reject override |
+| Ambiguous candidate | manual_review_required=true |
+
+---
+
+# Code Quality Principles
+
+The project follows:
+
+- Modular architecture
+- Separation of responsibilities
+- Pydantic schema validation
+- Error handling
+- Logging
+- Deterministic rule enforcement
+- Retry-based LLM reliability
+
+Each component has a single responsibility:
+
+| File | Responsibility |
+|-|-|
+| llm_client.py | Communicates with Groq |
+| prompt_builder.py | Creates evaluation prompts |
+| evaluator.py | Controls evaluation workflow |
+| validators.py | Applies business rules |
+| report_writer.py | Generates final report |
+
+---
+
+# Testing
+
+Run:
+
+```bash
+pytest tests/ -v
+```
+
+The tests validate deterministic business rules without requiring API calls.
+
+---
+
+# Future Improvements
+
+Possible extensions:
+
+- Streamlit recruiter dashboard
+- Batch candidate processing
+- Async LLM evaluation
+- Multiple LLM provider fallback
+- Resume PDF parsing
+- Vector database based candidate search
+- Interview question generation
+
+---
+
+# My Approach
+
+I designed this system as a hybrid AI recruitment agent.
+
+The LLM performs complex reasoning tasks such as requirement matching, scoring, and generating explanations.
+
+However, critical hiring rules are enforced through deterministic Python validation to ensure reliability and consistency.
+
+The system also handles uncertainty using a manual review mechanism instead of forcing every candidate into only accept or reject categories.
+
+This architecture creates a safer and more realistic AI-assisted recruitment workflow.
