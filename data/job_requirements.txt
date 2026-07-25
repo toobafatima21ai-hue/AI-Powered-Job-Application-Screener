@@ -1,0 +1,14 @@
+Position: Python Backend Developer
+
+Must Have:
+- Minimum 2 years of Python experience
+- Knowledge of REST APIs
+- Has worked on at least one AI or ML project
+
+Good to Have:
+- Experience with FastAPI or Django
+- Knows Docker or any cloud platform (AWS, GCP, Azure)
+
+Disqualify If:
+- Less than 1 year of total experience
+- No Python experience at all

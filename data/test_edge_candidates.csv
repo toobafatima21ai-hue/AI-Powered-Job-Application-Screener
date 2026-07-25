@@ -1,0 +1,7 @@
+candidate_id,name,python_years,total_exp,rest_api,ai_ml_project,framework,cloud
+E001,Ahmed Khan,1.8,2.5,Yes,Yes,FastAPI,AWS
+E002,Fatima Ali,,3,Yes,Yes,Django,AWS
+E003,Hassan Raza,0,0.8,No,No,None,None
+E004,Ayesha Malik,2,3,Yes,Yes,,GCP
+E005,Bilal Ahmed,2,3,Not Mentioned,Yes,Flask,None
+E006,Sana Noor,1.9,4,Yes,Yes,FastAPI,Docker

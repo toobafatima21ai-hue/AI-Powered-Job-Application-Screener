@@ -1,0 +1,6 @@
+candidate_id,name,python_years,total_exp,rest_api,ai_ml_project,framework,cloud
+C001,Sara Ahmed,3,4,Yes,Yes,FastAPI,AWS
+C002,Ali Raza,1,1.5,Yes,No,Django,No
+C003,Maria Khan,0,3,No,No,Node.js,No
+C004,Usman Tariq,2,2,No,Yes,FastAPI,Docker
+C005,Hina Malik,4,6,Yes,Yes,None,GCP
