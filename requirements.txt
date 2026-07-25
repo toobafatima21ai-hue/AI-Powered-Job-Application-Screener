@@ -1,0 +1,5 @@
+groq>=0.30.0
+python-dotenv
+pydantic
+pandas
+pytest
